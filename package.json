@@ -1,0 +1,40 @@
+{
+  "name": "painter-robot-sim",
+  "version": "1.0.0",
+  "description": "Web application to simulate a painting robot.",
+  "main": "index.js",
+  "scripts": {
+    "build": "node node_modules/webpack/bin/webpack.js",
+    "watch": "node node_modules/webpack/bin/webpack.js --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmptable/painter-robot-sim.git"
+  },
+  "author": "Owen Trueblood",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jmptable/painter-robot-sim/issues"
+  },
+  "homepage": "https://github.com/jmptable/painter-robot-sim#readme",
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-transform-flow-strip-types": "^6.14.0",
+    "babel-plugin-typecheck": "^3.9.0",
+    "babel-preset-es2015": "^6.14.0",
+    "eslint": "^3.4.0",
+    "eslint-config-airbnb": "^10.0.1",
+    "eslint-plugin-flowtype": "^2.15.0",
+    "eslint-plugin-import": "^1.14.0",
+    "eslint-plugin-jsx-a11y": "^2.2.1",
+    "eslint-plugin-react": "^6.2.0",
+    "flow-bin": "^0.32.0",
+    "webpack": "^1.13.2"
+  },
+  "dependencies": {
+    "express": "^4.14.0",
+    "three": "^0.80.1"
+  }
+}
