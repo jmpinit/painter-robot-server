@@ -3,7 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 module.exports = [
     {
         name: 'client-side',
-        entry: './src/main.js',
+        entry: './client/main.js',
         output: {
             path: __dirname,
             filename: 'public/js/app.js',
