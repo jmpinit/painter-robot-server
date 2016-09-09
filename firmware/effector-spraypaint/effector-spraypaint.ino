@@ -4,7 +4,7 @@ const String versionString = "0.8.0";
 
 // max length of time paint will be sprayed
 // (for safety / convenience)
-#define PAINTING_TIMEOUT 5000
+#define PAINTING_TIMEOUT 1000
 
 #define AIRFLOW_RESOLUTION 1024
 
@@ -124,8 +124,6 @@ int setColor(int color) {
     int newPos = colorLimit.min + (colorIndex / 8.0 * (colorLimit.max - colorLimit.min));
     colorChooserMotor.goalPosition(newPos);
 
-    Serial.println(newPos);
-
     return 0;
 }
 
@@ -139,10 +137,6 @@ int setAirflow(int airflow) {
     int newPos = airFlowLimit.min + (airflowNorm * (airFlowLimit.max - airFlowLimit.min));
     airFlowMotor.goalPosition(newPos);
 
-    Serial.println(airflow);
-    Serial.println(airflowNorm);
-    Serial.println(newPos);
-
     maybeStartPainting();
 
     return 0;
@@ -155,11 +149,9 @@ void setPaintflow(int paintflow) {
     }
 
     if (paintflow) {
-        Serial.println("turning on paint");
         paintFlowMotor.goalPosition(paintFlowLimit.max);
         maybeStartPainting();
     } else {
-        Serial.println("turning off paint");
         paintFlowMotor.goalPosition(paintFlowLimit.min);
     }
 
