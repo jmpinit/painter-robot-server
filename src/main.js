@@ -29,6 +29,7 @@ class Painter {
     size: number;
     motorCoefficient: number;
 
+    controlling: boolean;
     drawing: boolean;
 
     canvas: Object;
@@ -39,6 +40,8 @@ class Painter {
     constructor() {
         this.size = 50;
         this.motorCoefficient = 1 / 600;
+
+        this.controlling = false;
 
         this.axes = {
             x: new Motor(600),
@@ -122,13 +125,15 @@ class Painter {
     }
 
     moveTo(x, y) {
-        if (x >= 0 && x < 600 && y >= 0 && x < 600) {
-            console.log('moving to', x, y);
-            robot.moveTo(this.socket, x, y);
+        if (this.controlling) {
+            if (x >= 0 && x < 600 && y >= 0 && x < 600) {
+                console.log('moving to', x, y);
+                robot.moveTo(this.socket, x, y);
 
-            this.axes.x.rotateTo(x);
-            this.axes.y.rotateTo(y);
-            this.updateGeometry();
+                this.axes.x.rotateTo(x);
+                this.axes.y.rotateTo(y);
+                this.updateGeometry();
+            }
         }
     }
 }
@@ -177,6 +182,14 @@ class Painter {
         }
     };
 
-    document.onmousedown = event => { painter.drawing = true; }
-    document.onmouseup = event => { painter.drawing = false; }
+    document.onmousedown = event => { painter.drawing = true; };
+    document.onmouseup = event => { painter.drawing = false; };
+
+    document.addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+            painter.controlling = true;
+        } else if (event.keyCode === 32) {
+            painter.controlling = false;
+        }
+    }, false);
 })();
