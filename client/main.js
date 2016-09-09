@@ -2,6 +2,7 @@
 
 import * as THREE from 'three';
 import * as robot from './robot';
+import Path from './path';
 
 const CAM_DISTANCE = 50;
 
@@ -139,6 +140,75 @@ class Painter {
 }
 
 (function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+
+    document.body.appendChild(canvas);
+
+    const randomPoint = () => [
+        canvas.width * Math.random(),
+        canvas.height * Math.random(),
+    ];
+
+    //const points = [randomPoint(), randomPoint()];
+    const points = [
+        [canvas.width / 2, canvas.height / 2],
+        [canvas.width / 2, canvas.height / 2 + 1],
+    ];
+
+    for (let i = 2; i < 100; i++) {
+        const pt0 = points[i-2];
+        const pt1 = points[i-1];
+
+        const v = {
+            x: pt1[0] - pt0[0],
+            y: pt1[1] - pt0[1],
+        };
+
+        const angle = Math.atan2(v.y, v.x);
+        const newAngle = angle + (2 * Math.PI * Math.random() - Math.PI) / 2;
+        const magnitude = 1 + 40 * Math.random();
+
+        const newPt = [
+            pt1[0] + (magnitude * Math.cos(newAngle)),
+            pt1[1] + (magnitude * Math.sin(newAngle)),
+        ];
+
+        points.push(newPt);
+    }
+
+    const path = new Path(points);
+
+    const ctx = canvas.getContext('2d');
+
+    function draw(path) {
+        let last;
+        path.points.forEach(pt => {
+            ctx.fillRect(pt[0], pt[1], 4, 4);
+
+            if (last) {
+                ctx.beginPath();
+                ctx.moveTo(last[0], last[1]);
+                ctx.lineTo(pt[0], pt[1]);
+                ctx.stroke();
+            }
+
+            last = pt;
+        });
+    }
+
+    ctx.strokeStyle = 'black';
+    draw(path);
+    ctx.strokeStyle = 'red';
+    ctx.fillStyle = 'red';
+    draw(path.sparsify(2 * Math.PI / 8));
+
+    //ctx.fillRect(0, 0, canvas.width, canvas.height);
+})();
+
+/*
+(function() {
     const painter = new Painter();
     painter.object.position.x -= painter.size / 2;
     painter.object.position.y -= painter.size / 2;
@@ -192,4 +262,4 @@ class Painter {
             painter.controlling = false;
         }
     }, false);
-})();
+})();*/
