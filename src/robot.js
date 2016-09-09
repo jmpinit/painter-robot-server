@@ -1,5 +1,5 @@
 function connect() {
-    return new WebSocket(`ws://${document.domain}:8080`);
+    return new WebSocket(`ws://${document.domain}:3001`);
 }
 
 function moveTo(sock, x, y) {

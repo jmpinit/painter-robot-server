@@ -186,7 +186,7 @@ class Painter {
     document.onmouseup = event => { painter.drawing = false; };
 
     document.addEventListener('keydown', event => {
-        if (event.keyCode === 13) {
+        if (event.keyCode === 13 || event.keyCode === 27) {
             painter.controlling = true;
         } else if (event.keyCode === 32) {
             painter.controlling = false;
