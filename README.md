@@ -1,2 +1,3 @@
-# painter-robot-sim
-Web application to simulate a painting robot.
+# Painter Robot Server
+
+Framework for controlling a large XY plotter painting robot.
