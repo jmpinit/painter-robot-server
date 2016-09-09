@@ -2,15 +2,15 @@
 
 import EventEmitter from 'events';
 
-/*
-class Wire {
-    // send data down the wire
-    // tx(data) { }
+class NullWire extends EventEmitter {
+    tx(data: any) {
+        console.log(`NullWire: ${data}`);
+    }
 
-    // data has been received
-    // .on('rx', data => {...})
+    open() {
+        return Promise.resolve();
+    }
 }
-*/
 
 class SerialWire extends EventEmitter {
     port: Object;
@@ -42,4 +42,4 @@ class SerialWire extends EventEmitter {
     }
 }
 
-export default SerialWire;
+export { SerialWire, NullWire };

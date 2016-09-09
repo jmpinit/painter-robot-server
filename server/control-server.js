@@ -15,8 +15,9 @@ function serve(robot, port: number) {
             const rpc = JSON.parse(msg);
 
             if (rpc.method === 'move') {
-                const { x, y } = rpc.params[0];
+                const [{ x, y }, opts] = rpc.params;
 
+                Object.keys(opts).map(attr => robot.setAttribute(attr, opts[attr]));
                 robot.moveTo(x, y).catch(err => log.error(err.trace));
 
                 sock.send(JSON.stringify({

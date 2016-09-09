@@ -1,8 +1,7 @@
 // @flow
 
 import * as THREE from 'three';
-import * as robot from './robot';
-import Path from './path';
+import RobotCommunicator from './robot';
 
 const CAM_DISTANCE = 50;
 
@@ -36,9 +35,13 @@ class Painter {
     canvas: Object;
     texture: Object;
 
-    socket: Object;
+    robot: Object;
 
     constructor() {
+        this.robot = new RobotCommunicator();
+        this.robot.connect();
+        this.robot.startTicking();
+
         this.size = 50;
         this.motorCoefficient = 1 / 600;
 
@@ -102,8 +105,6 @@ class Painter {
         this.object.add(this.geometry.horizontalBox);
         this.object.add(this.geometry.verticalBox);
         this.object.add(this.geometry.paintBox);
-
-        this.socket = robot.connect();
     }
 
     tick() {
@@ -127,9 +128,10 @@ class Painter {
 
     moveTo(x, y) {
         if (this.controlling) {
+        console.log('might move to', x, y);
             if (x >= 0 && x < 600 && y >= 0 && x < 600) {
                 console.log('moving to', x, y);
-                robot.moveTo(this.socket, x, y);
+                this.robot.addPoint(x, y);
 
                 this.axes.x.rotateTo(x);
                 this.axes.y.rotateTo(y);
@@ -139,10 +141,11 @@ class Painter {
     }
 }
 
+/*
 (function() {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     document.body.appendChild(canvas);
 
@@ -153,8 +156,8 @@ class Painter {
 
     //const points = [randomPoint(), randomPoint()];
     const points = [
-        [canvas.width / 2, canvas.height / 2],
-        [canvas.width / 2, canvas.height / 2 + 1],
+        [canvas.width / 8, canvas.height / 2],
+        [canvas.width / 8 + 4, canvas.height / 2],
     ];
 
     for (let i = 2; i < 100; i++) {
@@ -206,8 +209,8 @@ class Painter {
 
     //ctx.fillRect(0, 0, canvas.width, canvas.height);
 })();
+*/
 
-/*
 (function() {
     const painter = new Painter();
     painter.object.position.x -= painter.size / 2;
@@ -256,10 +259,13 @@ class Painter {
     document.onmouseup = event => { painter.drawing = false; };
 
     document.addEventListener('keydown', event => {
-        if (event.keyCode === 13 || event.keyCode === 27) {
+        if (event.keyCode === 13) {
             painter.controlling = true;
-        } else if (event.keyCode === 32) {
+        } else if (event.keyCode === 32 || event.keyCode === 27) {
             painter.controlling = false;
+        } else if (event.keyCode >= 49 && event.keyCode <= 57) {
+            const rate = 500 * (event.keyCode - 49 + 1);
+            painter.robot.rate = rate;
         }
     }, false);
-})();*/
+})();

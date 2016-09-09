@@ -2,7 +2,7 @@ import log from 'winston';
 import SerialPort from 'serialport';
 import { EventEmitter } from 'events';
 
-import SerialWire from './wire';
+import { NullWire, SerialWire } from './wire';
 import * as gcode from './g-code';
 
 class RobotController extends EventEmitter {
@@ -34,6 +34,17 @@ class RobotController extends EventEmitter {
         };
     }
 
+    setAttribute(attribute, value) {
+        switch (attribute) {
+        case 'feedrate':
+            console.log('setting', attribute, 'to', value);
+            this.send(gcode.feedRate(value));
+            break;
+        default:
+            throw new Error(`Unrecognized attribute "${attribute}"`);
+        }
+    }
+
     // fulfills when the robot has actually reached the specified coordinates
     moveTo(x, y) {
         log.info(`Moving to (${x}, ${y})`);
@@ -43,7 +54,6 @@ class RobotController extends EventEmitter {
             y >= this.config.limit.y.min &&
             y < this.config.limit.y.max) {
             return Promise.all([
-                this.send(gcode.absolute()),
                 this.send(gcode.position(x, y, 0)),
             ]);
         }
@@ -129,7 +139,13 @@ class RobotController extends EventEmitter {
                 fulfill();
             });
 
-            this.wire.open().catch(err => reject(err));
+            this.wire.open()
+                .then(() => (
+                    this.send(gcode.absolute())
+                        .then(() => this.send(gcode.feedRate('5000.0')))
+                        .then(() => this.send(gcode.interpolate()))
+                ))
+                .catch(err => reject(err));
         });
     }
 }
@@ -149,6 +165,7 @@ function control(portPath) {
 
     // forward control data from the robot model to the actual robot
     controller.plug(wire);
+    // controller.plug(new NullWire());
 
     return controller.initialize()
         .then(() => Promise.resolve(controller));

@@ -14,10 +14,10 @@ class Path {
         const magnitude = ({ x, y }) => Math.sqrt((x * x) + (y * y));
 
         if (this.points.length === 0) {
-            return [];
+            return new Path([]);
         } else if (this.points.length === 1 || this.points.legnth === 2) {
             // nothing to do
-            return copyPoints(this.points);
+            return new Path(copyPoints(this.points));
         }
 
         const sparse = [];
