@@ -80,7 +80,17 @@ void loop() {
     while (Serial.available() > 0) {
         char c = Serial.read();
 
+        if (c == '\n') {
+            // we only watch for carriage return
+            continue;
+        }
+
+        Serial.print(c);
+
         if (c == '\r') {
+            // a newline for our output
+            Serial.print('\n');
+
             // check if there is a command in the buffer 
             switch (parse(commandBuffer)) {
                 case CMD_COLOR:
