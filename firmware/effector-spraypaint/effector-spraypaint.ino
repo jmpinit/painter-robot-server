@@ -18,7 +18,7 @@ const String versionString = "0.8.0";
 
 // max length of time paint will be sprayed
 // (for safety / convenience)
-#define PAINTING_TIMEOUT 1000
+#define PAINTING_TIMEOUT 3000
 
 #define AIRFLOW_RESOLUTION 1024
 
