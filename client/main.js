@@ -128,15 +128,19 @@ class Painter {
 
     moveTo(x, y) {
         if (this.controlling) {
-        console.log('might move to', x, y);
             if (x >= 0 && x < 600 && y >= 0 && x < 600) {
-                console.log('moving to', x, y);
                 this.robot.addPoint(x, y);
 
                 this.axes.x.rotateTo(x);
                 this.axes.y.rotateTo(y);
                 this.updateGeometry();
             }
+        }
+    }
+
+    spray(color, size) {
+        if (this.controlling) {
+            this.robot.spray(color, size);
         }
     }
 }
@@ -255,8 +259,18 @@ class Painter {
         }
     };
 
-    document.onmousedown = event => { painter.drawing = true; };
-    document.onmouseup = event => { painter.drawing = false; };
+    let sprayInterval;
+
+    document.onmousedown = event => {
+        sprayInterval = setInterval(() => painter.spray('water', 1), 200);
+        painter.drawing = true;
+    };
+
+    document.onmouseup = event => {
+        clearInterval(sprayInterval);
+        painter.spray('water', 0);
+        painter.drawing = false;
+    };
 
     document.addEventListener('keydown', event => {
         if (event.keyCode === 13) {
@@ -264,8 +278,10 @@ class Painter {
         } else if (event.keyCode === 32 || event.keyCode === 27) {
             painter.controlling = false;
         } else if (event.keyCode >= 49 && event.keyCode <= 57) {
-            const rate = 500 * (event.keyCode - 49 + 1);
+            const rate = 1000 * (event.keyCode - 49 + 1);
             painter.robot.rate = rate;
+        } else if (event.keyCode === 83) {
+            painter.robot.spray('water', 0.5);
         }
     }, false);
 })();

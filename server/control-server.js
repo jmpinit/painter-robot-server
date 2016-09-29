@@ -25,6 +25,26 @@ function serve(robot, port: number) {
                     error: null,
                     id: msg.id,
                 }));
+            } else if (rpc.method === 'spray') {
+                const [{ color, size }] = rpc.params;
+
+                try {
+                    robot.spray(color, size);
+
+                    sock.send(JSON.stringify({
+                        result: 'ok',
+                        error: null,
+                        id: msg.id,
+                    }));
+                } catch (e) {
+                    console.error(e.stacktrace);
+                    
+                    sock.send(JSON.stringify({
+                        result: null,
+                        error: e.message,
+                        id: msg.id,
+                    }));
+                }
             }
         });
     });

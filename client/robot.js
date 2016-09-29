@@ -38,6 +38,14 @@ class RobotCommunicator {
         }));
     }
 
+    spray(color: string, size: number) {
+        this.sock.send(JSON.stringify({
+            method: 'spray',
+            params: [{ color, size }],
+            id: 'abc123', // TODO real UUID
+        }));
+    }
+
     tick() {
         const points = this.batch.map(pt => [pt.pos.x, pt.pos.y]);
         const path = new Path(points);
@@ -57,14 +65,14 @@ class RobotCommunicator {
         }
     }
 
-    startTicking(delay) {
+    startTicking(delay: ?number) {
         if (this.tickTimer) {
             throw new Error('Already ticking');
         }
 
         this.tickTimer = setInterval(() => {
             this.tick();
-        }, delay);
+        }, delay || 100);
     }
 }
 

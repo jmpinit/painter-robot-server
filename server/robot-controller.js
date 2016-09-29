@@ -1,19 +1,24 @@
+// @flow
+
 import log from 'winston';
 import SerialPort from 'serialport';
 import { EventEmitter } from 'events';
 
-import { NullWire, SerialWire } from './wire';
+import { SerialWire } from './wire';
 import * as gcode from './g-code';
+
+const ROBOT_FEEDRATE = '15000';
 
 class RobotController extends EventEmitter {
     initialized: boolean;
-    txQueue: Array;
-    rxQueue: Array;
     config: Object;
-    wire: Object;
+    wireXY: Object;
 
-    constructor() {
+    constructor(wireXY, wireEffector) {
         super();
+
+        this.wireXY = wireXY;
+        this.wireEffector = wireEffector;
 
         this.initialized = false;
 
@@ -38,7 +43,7 @@ class RobotController extends EventEmitter {
         switch (attribute) {
         case 'feedrate':
             console.log('setting', attribute, 'to', value);
-            this.send(gcode.feedRate(value));
+            this.wireXY.send(gcode.feedRate(value));
             break;
         default:
             throw new Error(`Unrecognized attribute "${attribute}"`);
@@ -54,70 +59,36 @@ class RobotController extends EventEmitter {
             y >= this.config.limit.y.min &&
             y < this.config.limit.y.max) {
             return Promise.all([
-                this.send(gcode.position(x, y, 0)),
+                this.wireXY.send(gcode.position(x, y, 0)),
             ]);
         }
 
         return Promise.reject(new Error(`Move to (${x}, ${y}) would violate motion limits`));
     }
 
-    handleMessage(data) {
-        const message = data.toString().trim();
-
-        // questionable: ignore empty messages
-        if (message.length === 0) {
-            return;
+    spray(color, size) {
+        if (size < 0 || size > 1) {
+            throw new Error('Size must be between 0 and 1');
         }
 
-        log.info(`Handling message: "${message}"`);
+        log.info(`Spraying ${color} spot of size ${size}`);
 
-        const handler = this.rxQueue.shift();
+        const colors = [
+            'blue', 'orange', 'red', 'green',
+            'water', 'water', 'water', 'water',
+        ];
 
-        if (!handler) {
-            log.warn(`Not handling message: ${data}`);
-        } if (handler.match(message)) {
-            handler.handle(message);
-        } else {
-            this.emit('error', new Error(`Unexpected message: ${message}`));
+        const colorIndex = colors.indexOf(color);
+
+        if (colorIndex === -1) {
+            throw new Error(`Unrecognized color "${color}"`);
         }
 
-        if (this.txQueue.length !== 0) {
-            const msg = this.txQueue.shift();
-            this.wire.tx(msg);
-        }
-    }
+        const fullSize = Math.floor(1023 * size);
 
-    onMessage(match, handle) {
-        this.rxQueue.push({ match, handle });
-    }
-
-    send(command) {
-        const terminatedCommand = `${command}\r`;
-
-        log.info(`Sending "${command}"`);
-
-        return new Promise(fulfill => {
-            if (this.rxQueue.length === 0) {
-                this.wire.tx(terminatedCommand);
-            } else {
-                this.txQueue.push(terminatedCommand);
-            }
-
-            this.rxQueue.push({
-                match: msg => msg === 'ok',
-                handle: () => fulfill(),
-            });
-        });
-    }
-
-    plug(wire) {
-        if (this.wire) {
-            throw new Error('Wire already plugged into this controller');
-        } else {
-            wire.on('rx', data => this.handleMessage(data));
-            this.wire = wire;
-            log.info('Communications wire plugged in');
-        }
+        this.wireEffector.send(`C${colorIndex + 1}`);
+        this.wireEffector.send(`A${fullSize}`);
+        this.wireEffector.send(size > 0 ? 'P1' : 'P0');
     }
 
     // Promise to fulfill robot initialization
@@ -128,44 +99,52 @@ class RobotController extends EventEmitter {
                 return;
             }
 
-            if (!this.wire) {
-                reject(new Error('No wire plugged in'));
+            if (!this.wireXY) {
+                reject(new Error('No wireXY plugged in'));
                 return;
             }
 
-            this.onMessage(msg => msg === 'Grbl 0.9j [\'$\' for help]', () => {
+            this.wireXY.onMessage(msg => msg === 'Grbl 0.9j [\'$\' for help]', () => {
                 this.initialized = true;
                 log.info('Robot successfully initialized');
                 fulfill();
             });
 
-            this.wire.open()
+            this.wireXY.open()
                 .then(() => (
-                    this.send(gcode.absolute())
-                        .then(() => this.send(gcode.feedRate('5000.0')))
-                        .then(() => this.send(gcode.interpolate()))
+                    this.wireXY.send(gcode.absolute())
+                        .then(() => this.wireXY.send(gcode.feedRate(ROBOT_FEEDRATE)))
+                        .then(() => this.wireXY.send(gcode.interpolate()))
                 ))
+                .catch(err => reject(err));
+
+            this.wireEffector.open()
                 .catch(err => reject(err));
         });
     }
 }
 
-function control(portPath) {
-    // the plan here is to decouple the specific wire protocol (e.g. serial)
+function control(robotPorts) {
+    // the plan here is to decouple the specific wireXY protocol (e.g. serial)
     // from the logical robot control commands (grbl & a custom scheme)
 
-    const port = new SerialPort(portPath, {
+    const portXY = new SerialPort(robotPorts.xy, {
         baudRate: 115200,
         parser: SerialPort.parsers.readline('\n'),
         autoOpen: false,
     });
 
-    const wire = new SerialWire(port);
-    const controller = new RobotController();
+    const portEffector = new SerialPort(robotPorts.effector, {
+        baudRate: 115200,
+        parser: SerialPort.parsers.readline('\n'),
+        autoOpen: false,
+    });
 
-    // forward control data from the robot model to the actual robot
-    controller.plug(wire);
-    // controller.plug(new NullWire());
+    // to forward control data from the robot controller to the actual robot
+    const wireXY = new SerialWire(portXY);
+    const wireEffector = new SerialWire(portEffector);
+
+    const controller = new RobotController(wireXY, wireEffector);
 
     return controller.initialize()
         .then(() => Promise.resolve(controller));
@@ -173,7 +152,11 @@ function control(portPath) {
 
 function findRobots() {
     // TODO actually look at what's connected and find the robots
-    return Promise.resolve(['/dev/tty.usbmodem14211']);
+    // instead of hardcoding
+    return Promise.resolve([{
+        xy: '/dev/tty.usbmodem14111',
+        effector: '/dev/tty.usbmodem14121',
+    }]);
 }
 
 function connect() {
