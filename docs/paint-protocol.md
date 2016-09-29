@@ -1,5 +1,7 @@
 # Painter Robot Protocol
 
+Follows [JSON-RPC spec](http://json-rpc.org/wiki/specification).
+
 To start controlling the robot via the server, open a WebSocket connection to port 3001.
 
 ## Moving
