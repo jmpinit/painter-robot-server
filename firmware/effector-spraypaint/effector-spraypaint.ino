@@ -1,5 +1,19 @@
 #include "DynamixelMotor.h"
 
+/*
+C - set color (0 to 8)
+A - set airflow (0 to 1023)
+P - set paint flow (0 or 1)
+S - set configuration
+
+example:
+    C6
+    A500
+    P1
+    A0
+    P0
+ */
+
 const String versionString = "0.8.0";
 
 // max length of time paint will be sprayed
