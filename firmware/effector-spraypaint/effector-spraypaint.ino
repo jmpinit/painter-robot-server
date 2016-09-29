@@ -82,15 +82,11 @@ void loop() {
 
         if (c == '\n') {
             // we only watch for carriage return
+            // so we ignore newlines
             continue;
         }
 
-        Serial.print(c);
-
         if (c == '\r') {
-            // a newline for our output
-            Serial.print('\n');
-
             // check if there is a command in the buffer 
             switch (parse(commandBuffer)) {
                 case CMD_COLOR:
