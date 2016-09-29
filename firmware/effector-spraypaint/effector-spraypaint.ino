@@ -152,7 +152,7 @@ int setColor(int color) {
 }
 
 int setAirflow(int airflow) {
-    if (airflow > AIRFLOW_RESOLUTION) {
+    if (airflow >= AIRFLOW_RESOLUTION) {
         // error
         return -1;
     }
