@@ -150,17 +150,15 @@ function control(robotPorts) {
         .then(() => Promise.resolve(controller));
 }
 
-function findRobots() {
+function findRobots(opts: Object) {
     // TODO actually look at what's connected and find the robots
     // instead of hardcoding
-    return Promise.resolve([{
-        xy: '/dev/tty.usbmodem14121',
-        effector: '/dev/tty.usbmodem14131',
-    }]);
+    console.log(opts);
+    return Promise.resolve([opts]);
 }
 
-function connect() {
-    return findRobots()
+function connect(opts: Object) {
+    return findRobots(opts)
         .then(ports => {
             if (ports.length === 0) {
                 return Promise.reject(new Error('No robots found!'));

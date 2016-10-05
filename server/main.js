@@ -29,11 +29,26 @@ function startServer(name: string, server: Object, options: ?Object) {
 function main() {
     const argv = minimist(process.argv.slice(2));
 
-    const paintPromise = startServer('paint', paintServer, { port: PAINT_PORT });
+    const xyPort = argv.xy;
+    const effectorPort = argv.effector;
+
+    if (xyPort === undefined || effectorPort === undefined) {
+        console.log('Please specify robot ports');
+        process.exit(1);
+        return;
+    }
+
+    const paintPromise = startServer('paint', paintServer, {
+        port: PAINT_PORT,
+        xy: xyPort,
+        effector: effectorPort,
+    });
 
     if (argv.selfcontained) {
         // to be self-contained we serve a web app
-        paintPromise.then(() => startServer('app', app, { port: APP_PORT }));
+        paintPromise.then(() => startServer('app', app, {
+            port: APP_PORT,
+        }));
     } else {
         // the input will be coming from somewhere outside
         paintPromise.then(() => startServer('input', inputServer, {

@@ -54,7 +54,9 @@ function serve(robot, port: number) {
 }
 
 function listen(options: Object, done: Function) {
-    controller.connect()
+    const { xy, effector } = options;
+
+    controller.connect({ xy, effector })
         .then(robot => serve(robot, options.port))
         .then(() => done())
         .catch(err => done(err));
