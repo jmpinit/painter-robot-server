@@ -154,8 +154,8 @@ function findRobots() {
     // TODO actually look at what's connected and find the robots
     // instead of hardcoding
     return Promise.resolve([{
-        xy: '/dev/tty.usbmodem14111',
-        effector: '/dev/tty.usbmodem14121',
+        xy: '/dev/tty.usbmodem14121',
+        effector: '/dev/tty.usbmodem14131',
     }]);
 }
 

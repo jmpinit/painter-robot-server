@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <title>Painter: Mobile Controller</title>
+    <style>
+    body {
+        margin: 0;
+    }
+    </style>
+  </head>
+  <body>
+  <p id="debug"></p>
+  <button id="mode">start</button>
+  <script type="text/javascript">
+    var ws = new WebSocket('ws://' + document.domain + ':3002');
+    ws.onmessage = function (msg) { console.log(msg.data); };
+
+    var controlling = false;
+    var debug = document.getElementById('debug');
+    var modeButton = document.getElementById('mode');
+    modeButton.onclick = function () {
+        if (controlling) {
+            controlling = false;
+            modeButton.innerHTML = "start";
+        } else {
+            controlling = true;
+            modeButton.innerHTML = "stop";
+        }
+    }
+
+    let spraying = false;
+
+    var xavg = makeArray(16);
+    var yavg = makeArray(16);
+
+    var lastX;
+    var lastY;
+
+    function makeArray(size) {
+        var arr = [];
+        for (var i = 0; i < size; i++) {
+            arr.push(0);
+        }
+        return arr;
+    }
+
+    function average(vs) {
+        var total = 0;
+        vs.forEach(v => total += v);
+        return total / vs.length;
+    }
+
+    function movingAvg(newV, vs) {
+        vs.push(newV);
+        vs.shift();
+        return average(vs);
+    }
+
+    function spray(x, y, pressure) {
+        ws.send(JSON.stringify({
+            method: 'input',
+            params: [{ x, y }, { pressure }],
+        }));
+    }
+
+    function handleMotionEvent(event) {
+        var x = event.accelerationIncludingGravity.x;
+        var y = event.accelerationIncludingGravity.y;
+        var z = event.accelerationIncludingGravity.z;
+        // debug.innerHTML = `${x}, ${y}, ${z}`;
+
+        var min = 0;
+        var max = 1;
+        var normX = Math.min(Math.max((x + 9) / 18, min), max);
+        var normY = Math.min(Math.max((y + 9) / 18, min), max);
+
+        movingAvg(normX, xavg);
+        movingAvg(normY, yavg);
+    }
+
+    setInterval(() => {
+        if (!controlling) {
+            return;
+        }
+
+        var x = average(xavg);
+        var y = average(yavg);
+
+        if (lastX === undefined || lastY === undefined) {
+            lastX = x;
+            lastY = y;
+            return;
+        }
+        
+        var diffX = Math.abs(x - lastX);
+        var diffY = Math.abs(y - lastY);
+        var dist = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
+        debug.innerHTML = dist;
+
+        if (dist > 0.005) {
+            spray(x, y, spraying ? );
+        }
+        lastX = x;
+        lastY = y;
+    }, 100);
+
+    window.addEventListener('devicemotion', handleMotionEvent, true);
+
+    document.onmousedown = event => {
+        const normX = event.pageX / window.innerWidth;
+        const normY = event.pageY / window.innerHeight;
+
+        spraying = true;
+    };
+
+    document.onmouseup = event => {
+        spraying = false;
+    };
+  </script>
+  </body>
+</html>
