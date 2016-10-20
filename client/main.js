@@ -162,16 +162,14 @@ class Painter {
     scene.add(painter.object);
 
     let camAngle = 0;
+    camera.position.x = CAM_DISTANCE * Math.cos(camAngle);
+    camera.position.z = CAM_DISTANCE * Math.sin(camAngle);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     function render() {
         requestAnimationFrame(render);
 
         painter.tick();
-
-        camera.position.x = CAM_DISTANCE * Math.cos(camAngle);
-        camera.position.z = CAM_DISTANCE * Math.sin(camAngle);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-        camAngle += (1 + Math.sin(Math.PI + camAngle)) / 40 + 0.001;
 
         renderer.render(scene, camera);
     }
