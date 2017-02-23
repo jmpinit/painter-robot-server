@@ -44,18 +44,18 @@ function main() {
         effector: effectorPort,
     });
 
-    if (argv.selfcontained) {
-        // to be self-contained we serve a web app
-        paintPromise.then(() => startServer('app', app, {
-            port: APP_PORT,
-        }));
-    } else {
+    if (argv.headless) {
         // the input will be coming from somewhere outside
         paintPromise.then(() => startServer('input', inputServer, {
             ports: {
                 input: INPUT_PORT,
                 output: PAINT_PORT,
             },
+        }));
+    } else {
+        // to be self-contained we serve a web app
+        paintPromise.then(() => startServer('app', app, {
+            port: APP_PORT,
         }));
     }
 }
