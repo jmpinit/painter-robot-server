@@ -21,6 +21,10 @@ I assume you have a robot.
 to swap the ports in the command.
 8. Open Chrome and navigate to the application. It should be located at [http://localhost:3000](http://localhost:3000).
 
+# Headless Mode
+
+Start with the `--headless` flag to not start the web UI and instead accept controldata via the remote API.
+
 ## Controls
 
 Hit the enter key to take control of the robot.
